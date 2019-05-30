@@ -13,60 +13,60 @@ T这是一个用来演示[微服务架构模式](http://martinfowler.com/microse
 ![](https://cloud.githubusercontent.com/assets/6069066/13864234/442d6faa-ecb9-11e5-9929-34a9539acde0.png)
 ![Piggy Metrics](https://cloud.githubusercontent.com/assets/6069066/13830155/572e7552-ebe4-11e5-918f-637a49dff9a2.gif)
 
-## Functional services
+## 功能性服务
 
-PiggyMetrics was decomposed into three core microservices. All of them are independently deployable applications, organized around certain business domains.
+PiggyMetrics 被分解为3个微服务. 它们都是独立部署的应用程序，围绕特定的业务域组织。
 
 <img width="880" alt="Functional services" src="https://cloud.githubusercontent.com/assets/6069066/13900465/730f2922-ee20-11e5-8df0-e7b51c668847.png">
 
-#### Account service
-Contains general user input logic and validation: incomes/expenses items, savings and account settings.
+#### 账户服务
+包含常规用户输入逻辑和验证: 收入/支出项目、储蓄和账户设置。
 
-Method	| Path	| Description	| User authenticated	| Available from UI
+方法	| 路径	| 描述	| 用户权限	| 提供用户界面
 ------------- | ------------------------- | ------------- |:-------------:|:----------------:|
-GET	| /accounts/{account}	| Get specified account data	|  | 	
-GET	| /accounts/current	| Get current account data	| × | ×
-GET	| /accounts/demo	| Get demo account data (pre-filled incomes/expenses items, etc)	|   | 	×
-PUT	| /accounts/current	| Save current account data	| × | ×
-POST	| /accounts/	| Register new account	|   | ×
+GET	| /accounts/{account}	| 获取指定账户数据	|  | 	
+GET	| /accounts/current	| 获取当前账户数据	| × | ×
+GET	| /accounts/demo	| 获取演示账户数据（预填收入/支出项目等）	|   | 	×
+PUT	| /accounts/current	| 保存当前账户数据	| × | ×
+POST	| /accounts/	| 注册新账户	|   | ×
 
 
-#### Statistics service
-Performs calculations on major statistics parameters and captures time series for each account. Datapoint contains values, normalized to base currency and time period. This data is used to track cash flow dynamics in account lifetime.
+#### 统计服务
+对主要统计参数执行计算并捕获每个账户的时间. 数据点包含值，标准化的基础货币和时间段. 此数据用于跟踪帐户生命周期中的现金流动态。
 
-Method	| Path	| Description	| User authenticated	| Available from UI
+方法	| 路径	| 描述	| 用户权限	| 提供用户界面
 ------------- | ------------------------- | ------------- |:-------------:|:----------------:|
-GET	| /statistics/{account}	| Get specified account statistics	          |  | 	
-GET	| /statistics/current	| Get current account statistics	| × | × 
-GET	| /statistics/demo	| Get demo account statistics	|   | × 
-PUT	| /statistics/{account}	| Create or update time series datapoint for specified account	|   | 
+GET	| /statistics/{account}	| 获取指定帐户统计信息	          |  | 	
+GET	| /statistics/current	| 获取当前帐户统计信息	| × | × 
+GET	| /statistics/demo	| 获取演示帐户统计信息	|   | × 
+PUT	| /statistics/{account}	| 为指定帐户创建或更新时序数据点	|   | 
 
 
-#### Notification service
-Stores users contact information and notification settings (like remind and backup frequency). Scheduled worker collects required information from other services and sends e-mail messages to subscribed customers.
+#### 通知服务
+存储用户联系信息和通知设置 (比如提醒和备份频率). 计划工作人员从其他服务收集所需信息，并向订阅的客户发送电子邮件。
 
-Method	| Path	| Description	| User authenticated	| Available from UI
+方法	| 路径	| 描述	| 用户权限	| 提供用户界面
 ------------- | ------------------------- | ------------- |:-------------:|:----------------:|
-GET	| /notifications/settings/current	| Get current account notification settings	| × | ×	
-PUT	| /notifications/settings/current	| Save current account notification settings	| × | ×
+GET	| /notifications/settings/current	| 获取当前帐户通知设置	| × | ×	
+PUT	| /notifications/settings/current	| 保存当前帐户通知设置	| × | ×
 
-#### Notes
-- Each microservice has its own database, so there is no way to bypass API and access persistance data directly.
-- In this project, I use MongoDB as a primary database for each service. It might also make sense to have a polyglot persistence architecture (сhoose the type of db that is best suited to service requirements).
-- Service-to-service communication is quite simplified: microservices talking using only synchronous REST API. Common practice in a real-world systems is to use combination of interaction styles. For example, perform synchronous GET request to retrieve data and use asynchronous approach via Message broker for create/update operations in order to decouple services and buffer messages. However, this brings us to the [eventual consistency](http://martinfowler.com/articles/microservice-trade-offs.html#consistency) world.
+#### 注意
+- 每个微服务都有自己的数据库，因此无法绕过API直接访问持久性数据。
+- 在这个项目中，我使用MongoDB作为每个服务的主数据库。拥有一个多语言持久性体系结构也是有意义的。 (选择最适合服务要求的DB类型).
+- 服务到服务的通信比较简单: 微服务之间的通信仅使用同步的REST API. 现实系统中的常见做法是使用交互样式的组合. 例如，执行同步GET 请求以检索数据，并通过消息代理使用异步方法来创建/更新操作，以分离服务和缓冲消息。不过，这带来了[最终一致性](http://martinfowler.com/articles/microservice-trade-offs.html#consistency)。
 
-## Infrastructure services
-There's a bunch of common patterns in distributed systems, which could help us to make described core services work. [Spring cloud](http://projects.spring.io/spring-cloud/) provides powerful tools that enhance Spring Boot applications behaviour to implement those patterns. I'll cover them briefly.
+## 基础设施服务
+分布式系统中有许多常见的模式，可以帮助我们使所描述的核心服务工作。 [Spring cloud](http://projects.spring.io/spring-cloud/) 提供了增强SpringBoot应用程序行为以实现这些模式的强大工具。我会简单介绍一下.
 <img width="880" alt="Infrastructure services" src="https://cloud.githubusercontent.com/assets/6069066/13906840/365c0d94-eefa-11e5-90ad-9d74804ca412.png">
-### Config service
-[Spring Cloud Config](http://cloud.spring.io/spring-cloud-config/spring-cloud-config.html) is horizontally scalable centralized configuration service for distributed systems. It uses a pluggable repository layer that currently supports local storage, Git, and Subversion. 
+### 配置服务
+[Spring Cloud Config](http://cloud.spring.io/spring-cloud-config/spring-cloud-config.html)为分布式系统提供水平可扩展的集中式配置服务。 它使用了一个可插入的存储库层，该层目前支持 local storage、Git和Subversion。 
 
-In this project, I use `native profile`, which simply loads config files from the local classpath. You can see `shared` directory in [Config service resources](https://github.com/sqshq/PiggyMetrics/tree/master/config/src/main/resources). Now, when Notification-service requests its configuration, Config service responses with `shared/notification-service.yml` and `shared/application.yml` (which is shared between all client applications).
+在这个项目中，我使用`native profile`，它只从本地类路径加载配置文件。你可以在[Config service resources](https://github.com/sqshq/PiggyMetrics/tree/master/config/src/main/resources)看到`share`目录。现在，当通知服务请求其配置时， Spring Cloud Config 会返回在所有客户端应用程序之间共享的`shared/notification-service.yml` 和`shared/application.yml` .
 
-##### Client side usage
-Just build Spring Boot application with `spring-cloud-starter-config` dependency, autoconfiguration will do the rest.
+##### 客户端使用
+只需要使用`spring-cloud-starter-config` 依赖来构建 Spring Boot 应用，自动化配置会完成其他步骤。
 
-Now you don't need any embedded properties in your application. Just provide `bootstrap.yml` with application name and Config service url:
+现在，你无须添加其他嵌入的属性在你的应用中。只需要提供带有应用名称的`bootstrap.yml`和配置服务路径：
 ```yml
 spring:
   application:
@@ -77,29 +77,29 @@ spring:
       fail-fast: true
 ```
 
-##### With Spring Cloud Config, you can change app configuration dynamically. 
-For example, [EmailService bean](https://github.com/sqshq/PiggyMetrics/blob/master/notification-service/src/main/java/com/piggymetrics/notification/service/EmailServiceImpl.java) was annotated with `@RefreshScope`. That means, you can change e-mail text and subject without rebuild and restart Notification service application.
+##### 使用Spring Cloud Config, 你可以动态地改变应用的配置。 
+例如, [EmailService bean](https://github.com/sqshq/PiggyMetrics/blob/master/notification-service/src/main/java/com/piggymetrics/notification/service/EmailServiceImpl.java) 被`@RefreshScope`注解.这意味着，你可以修改邮件的文本和主题而无须重新构建并重启通知服务。
 
-First, change required properties in Config server. Then, perform refresh request to Notification service:
+首先，在配置服务中修改必需的属性。然后，对通知服务执行刷新请求：
 `curl -H "Authorization: Bearer #token#" -XPOST http://127.0.0.1:8000/notifications/refresh`
 
-Also, you could use Repository [webhooks to automate this process](http://cloud.spring.io/spring-cloud-config/spring-cloud-config.html#_push_notifications_and_spring_cloud_bus)
+当然，你也可以使用此仓库 [webhooks to automate this process](http://cloud.spring.io/spring-cloud-config/spring-cloud-config.html#_push_notifications_and_spring_cloud_bus)
 
-##### Notes
-- There are some limitations for dynamic refresh though. `@RefreshScope` doesn't work with `@Configuration` classes and doesn't affect `@Scheduled` methods
-- `fail-fast` property means that Spring Boot application will fail startup immediately, if it cannot connect to the Config Service.
-- There are significant [security notes](https://github.com/sqshq/PiggyMetrics#security) below
+##### 注意
+- 但是，动态刷新有一些限制. `@RefreshScope` 不会与`@Configuration` 的类一起工作并且不会作用于`@Scheduled` 方法；
+- `fail-fast` 属性意味着如果连接不上配置服务， Spring Boot 应用将无法立即启动；
+- 以下是重要的 [安全说明](https://github.com/sqshq/PiggyMetrics#security)；
 
-### Auth service
-Authorization responsibilities are completely extracted to separate server, which grants [OAuth2 tokens](https://tools.ietf.org/html/rfc6749) for the backend resource services. Auth Server is used for user authorization as well as for secure machine-to-machine communication inside a perimeter.
+### 授权服务
+授权责任被完全提取到单独的服务器，该服务器为后端资源服务授予[OAuth2令牌](https://tools.ietf.org/html/rfc6749)。授权服务用于用户授权，也用于在外围环境中进行安全的机器到机器通信。
 
-In this project, I use [`Password credentials`](https://tools.ietf.org/html/rfc6749#section-4.3) grant type for users authorization (since it's used only by native PiggyMetrics UI) and [`Client Credentials`](https://tools.ietf.org/html/rfc6749#section-4.4) grant for microservices authorization.
+在项目中，我使用 [`密码凭据`](https://tools.ietf.org/html/rfc6749#section-4.3) 的授权类型为用户授权 (因为它只被本地Piggmetrics用户界面使用) 和 [`客户端凭据`](https://tools.ietf.org/html/rfc6749#section-4.4) 为微服务授权；
 
-Spring Cloud Security provides convenient annotations and autoconfiguration to make this really easy to implement from both server and client side. You can learn more about it in [documentation](http://cloud.spring.io/spring-cloud-security/spring-cloud-security.html) and check configuration details in [Auth Server code](https://github.com/sqshq/PiggyMetrics/tree/master/auth-service/src/main/java/com/piggymetrics/auth).
+SpringCloudSecurity提供了方便的注释和自动配置，使得从服务器和客户端实现这一点非常容易。 你可以在[文档](http://cloud.spring.io/spring-cloud-security/spring-cloud-security.html)中学习更多以及在[身份验证服务器代码](https://github.com/sqshq/PiggyMetrics/tree/master/auth-service/src/main/java/com/piggymetrics/auth)中查找配置详情；
 
-From the client side, everything works exactly the same as with traditional session-based authorization. You can retrieve `Principal` object from request, check user's roles and other stuff with expression-based access control and `@PreAuthorize` annotation.
+从客户机的角度来看，一切工作方式都与基于会话的传统授权完全相同。您可以从请求中检索`principal`对象，使用基于表达式的访问控制和`@preauthorize`来检查用户角色和其他内容。
 
-Each client in PiggyMetrics (account-service, statistics-service, notification-service and browser) has a scope: `server` for backend services, and `ui` - for the browser. So we can also protect controllers from external access, for example:
+PiggyMetrics中的每个客户端（帐户服务、统计服务、通知服务和浏览器）都有其作用域: `server` 用于后端，`ui`用于前端. 所以我们也可以保护控制器不受外部访问的影响，例如：
 
 ``` java
 @PreAuthorize("#oauth2.hasScope('server')")
@@ -110,13 +110,13 @@ public List<DataPoint> getStatisticsByAccountName(@PathVariable String name) {
 ```
 
 ### API Gateway
-As you can see, there are three core services, which expose external API to client. In a real-world systems, this number can grow very quickly as well as whole system complexity. Actually, hundreds of services might be involved in rendering of one complex webpage.
+如您所见，有三个核心服务，它们向客户机公开外部API。在现实世界中，这个数字可以非常迅速地增长，也可以增加整个系统的复杂性。实际上，数百个服务可能涉及到一个复杂网页的呈现。
 
-In theory, a client could make requests to each of the microservices directly. But obviously, there are challenges and limitations with this option, like necessity to know all endpoints addresses, perform http request for each piece of information separately, merge the result on a client side. Another problem is non web-friendly protocols which might be used on the backend.
+理论上，客户机可以直接向每个微服务发出请求。但显然，这个选项存在挑战和局限性，比如需要知道所有终端地址，分别对每一条信息执行HTTP请求，在客户端合并结果。另一个问题是后端可能使用的非Web友好协议。
 
-Usually a much better approach is to use API Gateway. It is a single entry point into the system, used to handle requests by routing them to the appropriate backend service or by invoking multiple backend services and [aggregating the results](http://techblog.netflix.com/2013/01/optimizing-netflix-api.html). Also, it can be used for authentication, insights, stress and canary testing, service migration, static response handling, active traffic management.
+通常更好的方法是使用API网关。它是进入系统的单一入口点，用于通过将请求路由到适当的后端服务或通过调用多个后端服务并[聚合结果](http://techblog.netflix.com/2013/01/optimizing-netflix-api.html)来处理请求。此外，它还可以用于身份验证、洞察、stress and canary测试、服务迁移、静态响应处理、主动流量管理。
 
-Netflix opensourced [such an edge service](http://techblog.netflix.com/2013/06/announcing-zuul-edge-service-in-cloud.html), and now with Spring Cloud we can enable it with one `@EnableZuulProxy` annotation. In this project, I use Zuul to store static content (ui application) and to route requests to appropriate microservices. Here's a simple prefix-based routing configuration for Notification service:
+像Netflix opensourced [这样的边缘服务](http://techblog.netflix.com/2013/06/announcing-zuul-edge-service-in-cloud.html)， 现在有了SpringCloud，我们可以通过一个`@enablezuulproxy`注释来启用它。在这个项目中，我使用zuul存储静态内容（UI应用程序），并将请求路由到适当的微服务。以下是通知服务基于前缀的简单路由配置：
 
 ```yml
 zuul:
@@ -128,42 +128,41 @@ zuul:
 
 ```
 
-That means all requests starting with `/notifications` will be routed to Notification service. There is no hardcoded address, as you can see. Zuul uses [Service discovery](https://github.com/sqshq/PiggyMetrics/blob/master/README.md#service-discovery) mechanism to locate Notification service instances and also [Circuit Breaker and Load Balancer](https://github.com/sqshq/PiggyMetrics/blob/master/README.md#http-client-load-balancer-and-circuit-breaker), described below.
+这意味着以`/notifications`开头的所有请求都将路由到通知服务。如您所见，没有硬编码地址。zuul使用[服务发现](https://github.com/sqshq/PiggyMetrics/blob/master/README.md#service-discovery)机制来定位通知服务实例，以及下面描述的[断路器和负载均衡](https://github.com/sqshq/PiggyMetrics/blob/master/README.md#http-client-load-balancer-and-circuit-breaker)。
 
-### Service discovery
+### 服务发现
 
-Another commonly known architecture pattern is Service discovery. It allows automatic detection of network locations for service instances, which could have dynamically assigned addresses because of auto-scaling, failures and upgrades.
+另一种常见的体系结构模式是服务发现。它允许自动检测服务实例的网络位置，由于自动伸缩、故障和升级，服务实例可以动态分配地址。
 
-The key part of Service discovery is Registry. I use Netflix Eureka in this project. Eureka is a good example of the client-side discovery pattern, when client is responsible for determining locations of available service instances (using Registry server) and load balancing requests across them.
+服务发现的关键部分是注册表。我在这个项目中使用Netflix Eureka。当客户机负责确定可用服务实例的位置（使用注册表服务器）和跨实例的负载平衡请求时，Eureka是客户端发现模式的一个很好的例子。
 
-With Spring Boot, you can easily build Eureka Registry with `spring-cloud-starter-eureka-server` dependency, `@EnableEurekaServer` annotation and simple configuration properties.
-
-Client support enabled with `@EnableDiscoveryClient` annotation an `bootstrap.yml` with application name:
+使用Spring引导，您可以使用`Spring Cloud Starter Eureka Server`依赖项、`@EnableEurekaServer`注解和简单的配置属性轻松构建Eureka注册表。
+客户端支持使用注解`@EnableDiscoveryClient`和带有应用名的配置文件`bootstrap.yml`来启用：
 ``` yml
 spring:
   application:
     name: notification-service
 ```
 
-Now, on application startup, it will register with Eureka Server and provide meta-data, such as host and port, health indicator URL, home page etc. Eureka receives heartbeat messages from each instance belonging to a service. If the heartbeat fails over a configurable timetable, the instance will be removed from the registry.
+现在，在应用程序启动时，它将注册到Eureka服务器并提供元数据，如主机和端口、健康指示器URL、主页等。Eureka从属于服务的每个实例接收心跳消息。如果心跳在可配置的时间表上失败，则实例将从注册表中删除。
 
-Also, Eureka provides a simple interface, where you can track running services and a number of available instances: `http://localhost:8761`
+此外，Eureka提供了一个简单的界面，您可以在其中跟踪正在运行的服务和许多可用实例： `http://localhost:8761`
 
-### Load balancer, Circuit breaker and Http client
+### 负载均衡，断路器和 Http客户端
 
-Netflix OSS provides another great set of tools. 
+Netflix OSS提供了另一套很棒的工具。
 
 #### Ribbon
-Ribbon is a client side load balancer which gives you a lot of control over the behaviour of HTTP and TCP clients. Compared to a traditional load balancer, there is no need in additional hop for every over-the-wire invocation - you can contact desired service directly.
+Ribbon是一个客户端负载均衡器，它为您提供了对HTTP和TCP客户端行为的大量控制。与传统的负载均衡器相比，不需要为每一次在线调用增加跃点——您可以直接联系所需的服务。
 
-Out of the box, it natively integrates with Spring Cloud and Service Discovery. [Eureka Client](https://github.com/sqshq/PiggyMetrics#service-discovery) provides a dynamic list of available servers so Ribbon could balance between them.
+开箱即用，它与SpringCloud和服务发现本地集成。 [Eureka Client](https://github.com/sqshq/PiggyMetrics#service-discovery) 提供可用服务器的动态列表，以便功能区可以在它们之间进行平衡。
 
 #### Hystrix
-Hystrix is the implementation of [Circuit Breaker pattern](http://martinfowler.com/bliki/CircuitBreaker.html), which gives a control over latency and failure from dependencies accessed over the network. The main idea is to stop cascading failures in a distributed environment with a large number of microservices. That helps to fail fast and recover as soon as possible - important aspects of fault-tolerant systems that self-heal.
+Hystrix是[断路器模式](http://martinfowler.com/bliki/CircuitBreaker.html)的实现，它通过网络访问依赖项来控制延迟和故障。 其主要思想是在具有大量微服务的分布式环境中停止级联故障。这有助于快速失败并尽快恢复-自我修复的容错系统的重要方面。
 
-Besides circuit breaker control, with Hystrix you can add a fallback method that will be called to obtain a default value in case the main command fails.
+除了断路器控制之外，使用hystrix，还可以添加一个回退方法，在主命令失败时调用该方法以获取默认值。
 
-Moreover, Hystrix generates metrics on execution outcomes and latency for each command, that we can use to [monitor system behavior](https://github.com/sqshq/PiggyMetrics#monitor-dashboard).
+此外，hystrix为每个命令生成有关执行结果和延迟的度量，我们可以使用这些度量来[监视系统行为](https://github.com/sqshq/PiggyMetrics#monitor-dashboard)。
 
 #### Feign
 Feign is a declarative Http client, which seamlessly integrates with Ribbon and Hystrix. Actually, with one `spring-cloud-starter-feign` dependency and `@EnableFeignClients` annotation you have a full set of Load balancer, Circuit breaker and Http client with sensible ready-to-go default configuration.
@@ -242,23 +241,23 @@ In this [configuration](https://github.com/sqshq/PiggyMetrics/blob/master/.travi
 
 ## How to run all the things?
 
-Keep in mind, that you are going to start 8 Spring Boot applications, 4 MongoDB instances and RabbitMq. Make sure you have `4 Gb` RAM available on your machine. You can always run just vital services though: Gateway, Registry, Config, Auth Service and Account Service.
+记住，您将启动8个Spring引导应用程序、4个MongoDB实例和RabbitMQ。确保您的计算机上有可用的`4 GB`RAM。 但是，您始终可以运行重要的服务：网关、注册表、配置、认证服务和帐户服务。
 
 #### Before you start
-- Install Docker and Docker Compose.
-- Export environment variables: `CONFIG_SERVICE_PASSWORD`, `NOTIFICATION_SERVICE_PASSWORD`, `STATISTICS_SERVICE_PASSWORD`, `ACCOUNT_SERVICE_PASSWORD`, `MONGODB_PASSWORD` (make sure they were exported: `printenv`)
-- Make sure to build the project: `mvn package [-DskipTests]`
+- 安装Docker和Docker Compose.
+- 导出环境变量: `CONFIG_SERVICE_PASSWORD`, `NOTIFICATION_SERVICE_PASSWORD`, `STATISTICS_SERVICE_PASSWORD`, `ACCOUNT_SERVICE_PASSWORD`, `MONGODB_PASSWORD` (make sure they were exported: `printenv`)
+- 确保构建项目: `mvn package [-DskipTests]`
 
-#### Production mode
-In this mode, all latest images will be pulled from Docker Hub.
-Just copy `docker-compose.yml` and hit `docker-compose up`
+#### 生产模式
+在此模式下，所有最新的图像将从Docker Hub中提取。
+只需要复制`docker-compose.yml`并点击`docker-compose up`
 
-#### Development mode
-If you'd like to build images yourself (with some changes in the code, for example), you have to clone all repository and build artifacts with maven. Then, run `docker-compose -f docker-compose.yml -f docker-compose.dev.yml up`
+#### 开发模式
+如果您想自己构建图像（例如代码中有一些更改），您必须克隆所有存储库并使用Maven构建工件。然后执行`docker-compose -f docker-compose.yml -f docker-compose.dev.yml up`
 
-`docker-compose.dev.yml` inherits `docker-compose.yml` with additional possibility to build images locally and expose all containers ports for convenient development.
+`docker-compose.dev.yml` 继承 `docker-compose.yml` 还可以在本地构建图像并公开所有容器端口以方便开发。
 
-#### Important endpoints
+#### 重要端口
 - http://localhost:80 - Gateway
 - http://localhost:8761 - Eureka Dashboard
 - http://localhost:9000/hystrix - Hystrix Dashboard (Turbine stream link: `http://turbine-stream-service:8080/turbine/turbine.stream`)
