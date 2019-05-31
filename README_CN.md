@@ -165,9 +165,9 @@ Hystrix是[断路器模式](http://martinfowler.com/bliki/CircuitBreaker.html)�
 此外，hystrix为每个命令生成有关执行结果和延迟的度量，我们可以使用这些度量来[监视系统行为](https://github.com/sqshq/PiggyMetrics#monitor-dashboard)。
 
 #### Feign
-Feign is a declarative Http client, which seamlessly integrates with Ribbon and Hystrix. Actually, with one `spring-cloud-starter-feign` dependency and `@EnableFeignClients` annotation you have a full set of Load balancer, Circuit breaker and Http client with sensible ready-to-go default configuration.
+Feign是一个声明性HTTP客户机，它与Ribbon和Hystrix无缝集成。实际上，有了一个`spring-cloud-starter-feign`依赖项和`@EnableFeignClients`注解，您就拥有了一套完整的负载均衡器、断路器和HTTP客户机，以及明智的随时可用的默认配置。
 
-Here is an example from Account Service:
+以下是账户中心的例子:
 
 ``` java
 @FeignClient(name = "statistics-service")
@@ -179,67 +179,67 @@ public interface StatisticsServiceClient {
 }
 ```
 
-- Everything you need is just an interface
-- You can share `@RequestMapping` part between Spring MVC controller and Feign methods
-- Above example specifies just desired service id - `statistics-service`, thanks to autodiscovery through Eureka (but obviously you can access any resource with a specific url)
+- 你所需要的只是一个接口
+- 你可以在Spring MVC controller和Feign 方法之间共享`@RequestMapping` 部分;
+- 上面的示例仅指定所需的服务ID-`statistics-service`，这归功于通过Eureka进行的自动发现（但显然，您可以使用特定的URL访问任何资源）。
 
-### Monitor dashboard
+### 监控面板
 
-In this project configuration, each microservice with Hystrix on board pushes metrics to Turbine via Spring Cloud Bus (with AMQP broker). The Monitoring project is just a small Spring boot application with [Turbine](https://github.com/Netflix/Turbine) and [Hystrix Dashboard](https://github.com/Netflix/Hystrix/tree/master/hystrix-dashboard).
+在这个项目配置中，每个带有Hystrix的微服务都通过SpringCloud总线（使用AMQP代理）将metrics 推送到turbine。监控项目只是一个带有[Turbine](https://github.com/Netflix/Turbine)和[Hystrix仪表板](https://github.com/Netflix/Hystrix/tree/master/hystrix-dashboard)的Spring boot应用程序。  
 
-See below [how to get it up and running](https://github.com/sqshq/PiggyMetrics#how-to-run-all-the-things).
+见下文[如何启动和运行](https://github.com/sqshq/PiggyMetrics#how-to-run-all-the-things).
 
-Let's see our system behavior under load: Account service calls Statistics service and it responses with a vary imitation delay. Response timeout threshold is set to 1 second.
+让我们看看我们的系统在负载下的行为：帐户服务调用统计服务，它以不同的模拟延迟响应。响应超时阈值设置为1秒。
 
 <img width="880" src="https://cloud.githubusercontent.com/assets/6069066/14194375/d9a2dd80-f7be-11e5-8bcc-9a2fce753cfe.png">
 
 <img width="212" src="https://cloud.githubusercontent.com/assets/6069066/14127349/21e90026-f628-11e5-83f1-60108cb33490.gif">	| <img width="212" src="https://cloud.githubusercontent.com/assets/6069066/14127348/21e6ed40-f628-11e5-9fa4-ed527bf35129.gif"> | <img width="212" src="https://cloud.githubusercontent.com/assets/6069066/14127346/21b9aaa6-f628-11e5-9bba-aaccab60fd69.gif"> | <img width="212" src="https://cloud.githubusercontent.com/assets/6069066/14127350/21eafe1c-f628-11e5-8ccd-a6b6873c046a.gif">
 --- |--- |--- |--- |
 | `0 ms delay` | `500 ms delay` | `800 ms delay` | `1100 ms delay`
-| Well behaving system. The throughput is about 22 requests/second. Small number of active threads in Statistics service. The median service time is about 50 ms. | The number of active threads is growing. We can see purple number of thread-pool rejections and therefore about 30-40% of errors, but circuit is still closed. | Half-open state: the ratio of failed commands is more than 50%, the circuit breaker kicks in. After sleep window amount of time, the next request is let through. | 100 percent of the requests fail. The circuit is now permanently open. Retry after sleep time won't close circuit again, because the single request is too slow.
+| 行为良好的系统。吞吐量约为每秒22个请求。统计服务中的活动线程数很少。平均服务时间约为50 ms。 | 活动线程的数量正在增加。我们可以看到紫色数量的线程池拒绝，因此大约30-40%的错误，但电路仍然是关闭的。 | 半开状态：指令失效率大于50%，断路器投入。在睡眠窗口时间段之后，下一个请求被释放。 | 100%的请求失败。电路现在永久断开。睡眠后重试不会再次关闭电路，因为单个请求太慢。
 
-### Log analysis
+### 日志分析
 
-Centralized logging can be very useful when attempting to identify problems in a distributed environment. Elasticsearch, Logstash and Kibana stack lets you search and analyze your logs, utilization and network activity data with ease.
-Ready-to-go Docker configuration described [in my other project](http://github.com/sqshq/ELK-docker).
+当试图在分布式环境中识别问题时，集中式日志记录非常有用。 ElasticSearch、Logstash和Kibana Stack允许您轻松搜索和分析日志、利用率和网络活动数据。
+准备就绪的Docker配置在[另一个项目](http://github.com/sqshq/ELK-docker)有描述.
 
-### Distributed tracing
+### 分布式跟踪
 
-Analyzing problems in distributed systems can be difficult, for example, tracing requests that propagate from one microservice to another. It can be quite a challenge to try to find out how a request travels through the system, especially if you don't have any insight into the implementation of a microservice. Even when there is logging, it is hard to tell which action correlates to a single request.
+分析分布式系统中的问题可能很困难，例如，跟踪从一个微服务传播到另一个微服务的请求。试图找出请求如何在系统中传播是一个很大的挑战，特别是如果您对微服务的实现没有任何了解。即使有日志记录，也很难判断哪个操作与单个请求相关。
 
-[Spring Cloud Sleuth](https://cloud.spring.io/spring-cloud-sleuth/) solves this problem by providing support for distributed tracing. It adds two types of IDs to the logging: traceId and spanId. The spanId represents a basic unit of work, for example sending an HTTP request. The traceId contains a set of spans forming a tree-like structure. For example, with a distributed big-data store, a trace might be formed by a PUT request. Using traceId and spanId for each operation we know when and where our application is as it processes a request, making reading our logs much easier. 
+[Spring Cloud Sleuth](https://cloud.spring.io/spring-cloud-sleuth/) 通过为分布式跟踪提供支持来解决这个问题。它将两种类型的ID添加到日志中：traceId和spanId。spanId表示基本的工作单元，例如发送HTTP请求。 traceId包含一组构成树状结构的跨度。例如，对于分布式大数据存储，跟踪可能由一个Put请求形成。对每个操作使用traceid和spanid，我们知道应用程序在何时何地处理请求，这使得读取日志更加容易。
 
-The logs are as follows, notice the `[appname,traceId,spanId,exportable]` entries from the Slf4J MDC:
+日志如下，注意slf4j mdc中的`[appname，traceid，spanid，exportable]`条目：
 
 ```text
 2018-07-26 23:13:49.381  WARN [gateway,3216d0de1384bb4f,3216d0de1384bb4f,false] 2999 --- [nio-4000-exec-1] o.s.c.n.z.f.r.s.AbstractRibbonCommand    : The Hystrix timeout of 20000ms for the command account-service is set lower than the combination of the Ribbon read and connect timeout, 80000ms.
 2018-07-26 23:13:49.562  INFO [account-service,3216d0de1384bb4f,404ff09c5cf91d2e,false] 3079 --- [nio-6000-exec-1] c.p.account.service.AccountServiceImpl   : new account has been created: test
 ```
 
-- *`appname`*: The name of the application that logged the span from the property `spring.application.name`
-- *`traceId`*: This is an ID that is assigned to a single request, job, or action
-- *`spanId`*: The ID of a specific operation that took place
-- *`exportable`*: Whether the log should be exported to [Zipkin](https://zipkin.io/)
+- *`appname`*: 记录属性`spring.application.name`范围的应用程序的名称 
+- *`traceId`*: 这是分配给单个请求、作业或操作的ID
+- *`spanId`*: 发生的特定操作的ID
+- *`exportable`*: 是否应将日志导出到 [Zipkin](https://zipkin.io/)
 
-## Security
+## 安全
 
-An advanced security configuration is beyond the scope of this proof-of-concept project. For a more realistic simulation of a real system, consider to use https, JCE keystore to encrypt Microservices passwords and Config server properties content (see [documentation](http://cloud.spring.io/spring-cloud-config/spring-cloud-config.html#_security) for details).
+高级安全配置超出了这个概念验证项目的范围。 为了更真实地模拟真实的系统，考虑使用HTTPS、JCE密钥库来加密微服务密码和配置服务器属性内容。 (详情请看 [文档](http://cloud.spring.io/spring-cloud-config/spring-cloud-config.html#_security)).
 
-## Infrastructure automation
+## 基础设施自动化
 
-Deploying microservices, with their interdependence, is much more complex process than deploying monolithic application. It is important to have fully automated infrastructure. We can achieve following benefits with Continuous Delivery approach:
+与部署单片应用程序相比，部署具有相互依赖性的微服务要复杂得多。拥有完全自动化的基础设施是很重要的。我们可以通过持续交付方法实现以下好处：
 
-- The ability to release software anytime
-- Any build could end up being a release
-- Build artifacts once - deploy as needed
+- 随时发布软件的能力
+- 任何构建最终都可能是一个版本
+- 一次性构建artifacts-按需部署
 
-Here is a simple Continuous Delivery workflow, implemented in this project:
+下面是一个简单的连续交付工作流，在本项目中实现：
 
 <img width="880" src="https://cloud.githubusercontent.com/assets/6069066/14159789/0dd7a7ce-f6e9-11e5-9fbb-a7fe0f4431e3.png">
 
-In this [configuration](https://github.com/sqshq/PiggyMetrics/blob/master/.travis.yml), Travis CI builds tagged images for each successful git push. So, there are always `latest` image for each microservice on [Docker Hub](https://hub.docker.com/r/sqshq/) and older images, tagged with git commit hash. It's easy to deploy any of them and quickly rollback, if needed.
+在这个[配置](https://github.com/sqshq/PiggyMetrics/blob/master/.travis.yml), Travis CI为每次成功的Git推送构建标记图像。因此，在[Docker Hub](https://hub.docker.com/r/sqshq/)上的每个微服务和旧的映像都有“最新”映像，并用git commit hash标记。如果需要，很容易部署它们中的任何一个并快速回滚。
 
-## How to run all the things?
+## 如何运行所有的东西?
 
 记住，您将启动8个Spring引导应用程序、4个MongoDB实例和RabbitMQ。确保您的计算机上有可用的`4 GB`RAM。 但是，您始终可以运行重要的服务：网关、注册表、配置、认证服务和帐户服务。
 
@@ -264,10 +264,10 @@ In this [configuration](https://github.com/sqshq/PiggyMetrics/blob/master/.travi
 - http://localhost:15672 - RabbitMq management (default login/password: guest/guest)
 
 #### Notes
-All Spring Boot applications require already running [Config Server](https://github.com/sqshq/PiggyMetrics#config-service) for startup. But we can start all containers simultaneously because of `depends_on` docker-compose option.
+所有Spring引导应用程序都需要运行[配置中心](https://github.com/sqshq/PiggyMetrics#config-service)才能启动。但是我们可以同时启动所有容器，因为`depends_on`docker-compose选项。
 
-Also, Service Discovery mechanism needs some time after all applications startup. Any service is not available for discovery by clients until the instance, the Eureka server and the client all have the same metadata in their local cache, so it could take 3 heartbeats. Default heartbeat period is 30 seconds.
+此外，服务发现机制在所有应用程序启动后需要一段时间。在实例、Eureka服务器和客户端的本地缓存中都具有相同的元数据之前，客户端无法发现任何服务，因此可能需要3次心跳。默认心跳周期为30秒。
 
-## Contributions are welcome!
+## 欢迎贡献!
 
-PiggyMetrics is open source, and would greatly appreciate your help. Feel free to suggest and implement improvements.
+PiggyMetrics是开源的, 并且非常感谢你的帮助. 随时提出建议并实施改进。
