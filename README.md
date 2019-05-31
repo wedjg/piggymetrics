@@ -5,6 +5,8 @@
 
 # Piggy Metrics
 
+[中文简体](./README_CN.md)
+
 **A simple way to deal with personal finances**
 
 This is a [proof-of-concept application](https://piggymetrics.tk), which demonstrates [Microservice Architecture Pattern](http://martinfowler.com/microservices/) using Spring Boot, Spring Cloud and Docker.
